@@ -28,6 +28,7 @@ class Network {
             process.env.kadence_TestNetworkEnabled = config.test_network;
             kadence.constants.SOLUTION_DIFFICULTY = 2;
             kadence.constants.IDENTITY_DIFFICULTY = 2;
+            kadence.constants.T_RESPONSETIMEOUT = 5000;
         }
         this.index = parseInt(config.child_derivation_index, 10);
 
@@ -108,6 +109,7 @@ class Network {
         this.log.info('Starting OT Node...');
         this.node.quasar = this.node.plugin(kadence.quasar());
         this.log.info('Quasar initialised');
+        this.node.eclipse = this.node.plugin(kadence.eclipse());
         this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
         this.log.info('Peercache initialised');
         this.node.spartacus = this.node.plugin(kadence.spartacus(
@@ -117,8 +119,8 @@ class Network {
         ));
         this.log.info('Spartacus initialised');
         this.node.hashcash = this.node.plugin(kadence.hashcash({
-            methods: ['PUBLISH', 'SUBSCRIBE'],
-            difficulty: 2,
+            methods: ['PUBLISH', 'SUBSCRIBE', 'hey-you'],
+            difficulty: 8,
         }));
         this.log.info('Hashcash initialised');
 
@@ -244,6 +246,13 @@ class Network {
                         this.log.info(`Connected to network via ${contact[0]} (https://${contact[1].hostname}:${contact[1].port})`);
                         this.log.info(`Discovered ${this.node.router.size} peers from seed`);
                         callback();
+
+                        this.log.info('Start with SPAM...');
+                        for (let i = 0; i < 2000; i += 1) {
+                            this.node.heyYou('something', contact[0], ((msg, err) => {
+                                console.log('Received result');
+                            }));
+                        }
                     } else if (!isBootstrap) {
                         this.log.error(`Failed to join network, will retry in ${retryPeriod / 1000} seconds. Bootstrap nodes are probably not online.`);
                         callback(new Error('Failed to join network'));
@@ -265,6 +274,15 @@ class Network {
             this.emitter.emit('kad-data-location-request', message);
         });
 
+
+        // hey you
+        this.node.use('hey-you', (request, response, next) => {
+            this.log.info('hey-you received');
+            this.log.info('Hey you, out there in the cold');
+            response.send({
+                status: 'OK',
+            });
+        });
 
         // add payload-request route
         this.node.use('payload-request', (request, response, next) => {
@@ -398,6 +416,17 @@ class Network {
             node.payloadRequest = (message, contactId, callback) => {
                 const contact = node.getContact(contactId);
                 node.send('payload-request', { message }, [contactId, contact], callback);
+            };
+
+            /**
+             * SHeu you
+             * @param message   Payload to be sent
+             * @param contactId KADemlia contact ID to be sent to
+             * @param callback  Response/Error callback
+             */
+            node.heyYou = (message, contactId, callback) => {
+                const contact = node.getContact(contactId);
+                node.send('hey-you', { message }, [contactId, contact], callback);
             };
 
             /**
