@@ -274,6 +274,14 @@ class Network {
             this.emitter.emit('kad-data-location-request', message);
         });
 
+        // hey you
+        this.node.use('hey-you', (request, response, next) => {
+            this.log.info('hey-you received');
+            this.log.info('Hey you, out there in the cold');
+            response.send({
+                status: 'OK',
+            });
+        });
 
         // hey you
         this.node.use('hey-you', (request, response, next) => {
