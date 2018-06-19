@@ -26,6 +26,8 @@ const DCService = require('./modules/DCService');
 const DHService = require('./modules/DHService');
 const DVService = require('./modules/DVService');
 const DataReplication = require('./modules/DataReplication');
+const memwatch = require('memwatch-next');
+const heapdump = require('heapdump');
 
 const pjson = require('./package.json');
 
@@ -35,6 +37,18 @@ const Web3 = require('web3');
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
     // application specific logging, throwing an error, or other logic here
+});
+
+memwatch.on('leak', (info) => {
+    console.error('Memory leak detected:\n', info);
+    heapdump.writeSnapshot((err, filename) => {
+        if (err) {
+            console.error(err);
+        }
+        else {
+            console.error(`Wrote snapshot: ${filename}`);
+        }
+    });
 });
 
 /**
