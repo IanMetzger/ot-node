@@ -5,7 +5,9 @@ const axios = require('axios');
 const envfile = require('envfile');
 const externalip = require('externalip');
 const fs = require('fs');
+const io = require('socket.io-client');
 
+const socket = io('http://127.0.0.1:3010');
 
 const Web3 = require('web3');
 
@@ -58,6 +60,12 @@ class RegisterNode {
         });
     }
 
+    socketSend(wallet, nodeIp) {
+        socket.on('news', (data) => {
+            socket.emit('sendData', { walletAddress: wallet, ipAddress: nodeIp });
+        });
+    }
+
 
     generateWallet() {
         return new Promise(async (resolve, reject) => {
@@ -88,6 +96,9 @@ class RegisterNode {
                     });
                 });
             } else {
+                const nodeIp = process.env.NODE_IP;
+                const wallet = process.env.NODE_WALLET;
+                this.socketSend(wallet, nodeIp);
                 // eslint-disable-next-line
                 require('../ot-node');
             }
@@ -113,6 +124,9 @@ class RegisterNode {
                 web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
                     if (balance > 0) {
                         clearInterval(checkBalanceInterval);
+                        const nodeIp = process.env.NODE_IP;
+                        const wallet = process.env.NODE_WALLET;
+                        this.socketSend(wallet, nodeIp);
                         // eslint-disable-next-line
                         require('../ot-node');
                     }
