@@ -8,7 +8,7 @@ const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
 class PeerCache {
     constructor(node, peerCacheFilePath) {
         this.node = node;
-        this.db = new Datastore({ filename: peerCacheFilePath, autoload: true });
+        this.db = new Datastore({ filename: peerCacheFilePath, autoload: true, corruptAlertThreshold: 1});
         this.db.persistence.setAutocompactionInterval(10000);
 
         this.node.router.events.on('add', (identity) => {
